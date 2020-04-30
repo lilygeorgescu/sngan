@@ -2,13 +2,13 @@
 
 # from mincepie import mapreducer, launcher
 # import cv2
-from PIL import Image
+# from PIL import Image
 import numpy as np
 import tensorflow as tf
 import os
 import sys
 import subprocess
-import imageio
+# import imageio
 import errno
 import scipy.misc
 import pdb

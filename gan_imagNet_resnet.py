@@ -13,7 +13,7 @@ sys.path.append(os.getcwd())
 
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-
+operating_system = sys.platform
 if operating_system.find("win") == -1:
     os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 else:
@@ -69,10 +69,10 @@ ACGAN_SCALE_G = 0.1  # How to scale generator's ACGAN loss relative to WGAN loss
 WORD2VEC_FILE = None
 VOCAB_SIZE = 1000
 EMBEDDING_DIM = 300  # 620
-CHECKPOINT_DIR = os.path.join(DATA_DIR, 'checkpoint')
+CHECKPOINT_DIR = 'checkpoint'
 LOSS_TYPE = 'HINGE'  # 'Goodfellow', 'HINGE', 'WGAN', 'WGAN-GP'
 SOFT_PLUS = False
-RESTORE = False
+RESTORE = True
 
 if CONDITIONAL and (not ACGAN) and (not NORMALIZATION_D):
     print("WARNING! Conditional model without normalization in D might be effectively unconditional!")
@@ -628,12 +628,12 @@ with tf.Session(config=config) as session:
                 print("\t{} ({})".format(v.name, shape_str))
         print("Total param count: {}".format(locale.format("%d", total_param_count, grouping=True)))
         
-    pdb.set_trace()
+    # pdb.set_trace()
     summaries_op = tf.summary.merge_all()
     saver = tf.train.Saver(max_to_keep=5)
     # summary_writer = tf.summary.FileWriter(CHECKPOINT_DIR, graph=session.graph)
     session.run(tf.global_variables_initializer())
-    pdb.set_trace()
+    # pdb.set_trace()
     if RESTORE:
         ckpt = tf.train.latest_checkpoint(CHECKPOINT_DIR)
         if ckpt:
@@ -649,19 +649,24 @@ with tf.Session(config=config) as session:
             for images_, labels_ in train_gen():
                 yield images_, labels_
 
-
-    gen = inf_train_gen()
+    
+    # gen = inf_train_gen()
     for iteration in range(ITERS):
+        print('iteration', iteration)
         start_time = time.time()
 
         if 0 < iteration:
             _ = session.run([gen_train_op], feed_dict={_iteration: iteration})
 
         for i in range(N_CRITIC):
+            print(i, N_CRITIC)
             # _data, _labels = next(gen)
             # data_, labels_ = ILSVRC2012.input_fn(filenames, labels, BATCH_SIZE, 21)
-            data_, labels_ = next(gen)
-            _data, _labels = session.run([data_, labels_])
+            print('bef')
+            data_, labels_ = train_gen.next()
+            # pdb.set_trace()
+            print('got data')
+            _data, _labels = data_, labels_
 
             # print('image_resized.shape: {}'.format(_data.shape))  # (N, 128, 128, 3)
             # _data = np.transpose(_data, axes=[0, 3, 1, 2])  # 'NHWC_to_NCHW'
