@@ -570,17 +570,27 @@ with tf.Session(config=config) as session:
     samples_label = fixed_labels[category]
     samples_label = tf.expand_dims(samples_label, axis=0)
     samples_label = tf.tile(samples_label, [25])
-    fixed_noise_samples = Generator(25, samples_label, noise=fixed_noise, reuse=True)
+    num_images_to_generate = 250
+    fixed_noise_samples = Generator(num_images_to_generate, samples_label, noise=fixed_noise, reuse=True)
 
-
+    def create_dir(directory_name):
+        if not os.path.exists(directory_name):
+            os.makedirs(directory_name)
+        
     def generate_image(frame):
         samples = session.run(fixed_noise_samples)
         samples_label_ = session.run(fixed_labels[category])
         samples = ((samples + 1.) * (255. / 2)).astype('int32')
         # samples = np.split(samples, 16, 0)
         # for sample in samples:
-        samples = np.reshape(samples, (25, 64, 64, 3))
-        common.misc.save_images(samples, 'samples_{}_{}.png'.format(frame, samples_label_))
+        samples = np.reshape(samples, (num_images_to_generate, 64, 64, 3))
+        dir_to_save = 'gen_images_%d' % frame
+        create_dir(dir_to_save)
+        for ii in range(num_images_to_generate):
+            image = np.uint8(np.clip(samples[ii] * 255, 0, 1))
+            cv.imwrite(os.path.join(dir_to_save, 'image_%d.png' % ii, image)
+            
+        # common.misc.save_images(samples, 'samples_{}_{}.png'.format(frame, samples_label_))
 
 
     # Function for calculating inception score
@@ -633,7 +643,7 @@ with tf.Session(config=config) as session:
     saver = tf.train.Saver(max_to_keep=5)
     # summary_writer = tf.summary.FileWriter(CHECKPOINT_DIR, graph=session.graph)
     session.run(tf.global_variables_initializer())
-    # pdb.set_trace()
+    pdb.set_trace()
     if RESTORE:
         ckpt = tf.train.latest_checkpoint(CHECKPOINT_DIR)
         if ckpt:
@@ -648,7 +658,17 @@ with tf.Session(config=config) as session:
         while True:
             for images_, labels_ in train_gen():
                 yield images_, labels_
-
+    
+    
+    ### generate image
+    
+    generate_image(iteration)
+    
+    ### generate image end
+    
+    
+    
+    
     
     # gen = inf_train_gen()
     for iteration in range(ITERS):
